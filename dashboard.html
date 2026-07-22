@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SmartGuard - Risk Alert Dashboard</title>
+    <style>
+        /* ===== PROFESSIONAL RISK ALERT STYLES ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        /* ===== HEADER WITH RISK INDICATOR ===== */
+        .header {
+            background: rgba(255,255,255,0.95);
+            padding: 25px;
+            border-radius: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .risk-indicator {
+            padding: 15px 25px;
+            border-radius: 50px;
+            font-weight: bold;
+            font-size: 20px;
+            transition: all 0.3s;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        /* ===== RISK LEVEL COLORS ===== */
+        .risk-low {
+            background: linear-gradient(135deg, #00b09b, #96c93d);
+            color: white;
+            box-shadow: 0 0 20px rgba(0,176,155,0.5);
+        }
+        
+        .risk-moderate {
+            background: linear-gradient(135deg, #f7971e, #ffd200);
+            color: white;
+            box-shadow: 0 0 20px rgba(247,151,30,0.5);
+        }
+        
+        .risk-high {
+            background: linear-gradient(135deg, #e52d27, #b31217);
+            color: white;
+            box-shadow: 0 0 30px rgba(229,45,39,0.7);
+            animation: alarm 0.5s infinite;
+        }
+        
+        @keyframes alarm {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+        
+        /* ===== DASHBOARD CARDS ===== */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+        
+        .card {
+            background: rgba(255,255,255,0.95);
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card-alert {
+            border: 3px solid #e74c3c;
+            animation: border-pulse 1s infinite;
+        }
+        
+        @keyframes border-pulse {
+            0% { border-color: #e74c3c; }
+            50% { border-color: #ff6b6b; }
+            100% { border-color: #e74c3c; }
+        }
+        
+        .sensor-icon {
+            font-size: 40px;
+            margin-bottom: 15px;
+        }
+        
+        .sensor-title {
+            font-size: 14px;
+            color: #7f8c8d;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .sensor-value {
+            font-size: 48px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        
+        .sensor-unit {
+            font-size: 18px;
+            color: #95a5a6;
+        }
+        
+        /* ===== THRESHOLD INDICATORS ===== */
+        .threshold-bar {
+            width: 100%;
+            height: 8px;
+            background: #ecf0f1;
+            border-radius: 4px;
+            margin: 15px 0;
+            overflow: hidden;
+        }
+        
+        .threshold-fill {
+            height: 100%;
+            transition: width 0.5s;
+        }
+        
+        .threshold-low { background: #2ecc71; }
+        .threshold-moderate { background: #f39c12; }
+        .threshold-high { background: #e74c3c; }
+        .threshold-critical { background: #c0392b; animation: blink 0.5s infinite; }
+        
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        /* ===== ALERT BANNER ===== */
+        .alert-banner {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            animation: slideIn 0.5s;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateY(-100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .alert-content {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .alert-icon {
+            font-size: 40px;
+            animation: ring 1s infinite;
+        }
+        
+        @keyframes ring {
+            0% { transform: rotate(0); }
+            10% { transform: rotate(15deg); }
+            20% { transform: rotate(-15deg); }
+            30% { transform: rotate(15deg); }
+            40% { transform: rotate(-15deg); }
+            50% { transform: rotate(0); }
+            100% { transform: rotate(0); }
+        }
+        
+        .alert-actions {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .alert-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 2px solid white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+        
+        .alert-btn:hover {
+            background: white;
+            color: #e74c3c;
+        }
+        
+        /* ===== MQTT LIVE LOG ===== */
+        .mqtt-panel {
+            background: rgba(255,255,255,0.95);
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin-bottom: 25px;
+        }
+        
+        .mqtt-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .mqtt-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .status-led {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: #2ecc71;
+            animation: blink 2s infinite;
+        }
+        
+        .mqtt-log {
+            background: #2c3e50;
+            color: #00ff00;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            height: 200px;
+            overflow-y: scroll;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        /* ===== RISK MATRIX ===== */
+        .risk-matrix {
+            background: rgba(255,255,255,0.95);
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .matrix-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .risk-item {
+            padding: 15px;
+            border-radius: 10px;
+            color: white;
+            text-align: center;
+        }
+        
+        .risk-critical { background: #c0392b; }
+        .risk-serious { background: #e74c3c; }
+        .risk-moderate { background: #f39c12; }
+        .risk-minor { background: #f1c40f; }
+        .risk-low { background: #27ae60; }
+        
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 1200px) {
+            .dashboard-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* ===== ALARM SOUND BUTTON ===== */
+        .mute-btn {
+            background: #34495e;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        .mute-btn:hover {
+            background: #2c3e50;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- ===== HEADER WITH RISK LEVEL ===== -->
+        <div class="header">
+            <div>
+                <h1 style="color: #2c3e50; margin-bottom: 5px;">🏢 SmartGuard Risk Alert System</h1>
+                <p style="color: #7f8c8d;">Real-Time Risk Monitoring & Automated Alerts</p>
+            </div>
+            <div>
+                <div id="globalRiskIndicator" class="risk-indicator risk-low">
+                    🟢 LOW RISK - MONITORING
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== MAIN ALERT BANNER (EMERGENCY) ===== -->
+        <div id="emergencyBanner" class="alert-banner" style="display: none;">
+            <div class="alert-content">
+                <span class="alert-icon">🚨</span>
+                <div>
+                    <h2 id="alertTitle" style="margin-bottom: 5px;">CRITICAL ALERT!</h2>
+                    <p id="alertDescription" style="font-size: 16px;">Temperature critical - Immediate action required!</p>
+                    <small id="alertTimestamp"></small>
+                </div>
+            </div>
+            <div class="alert-actions">
+                <button class="alert-btn" onclick="acknowledgeAlert()">✓ ACKNOWLEDGE</button>
+                <button class="alert-btn" onclick="silenceAlarm()">🔇 SILENCE</button>
+            </div>
+        </div>
+
+        <!-- ===== LIVE SENSOR DASHBOARD ===== -->
+        <div class="dashboard-grid">
+            <!-- Temperature Card -->
+            <div class="card" id="tempCard">
+                <div class="sensor-icon">🌡️</div>
+                <div class="sensor-title">TEMPERATURE</div>
+                <div>
+                    <span class="sensor-value" id="tempValue">23.5</span>
+                    <span class="sensor-unit">°C</span>
+                </div>
+                <div class="threshold-bar">
+                    <div id="tempBar" class="threshold-fill threshold-low" style="width: 45%;"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span>Threshold: 30°C</span>
+                    <span id="tempRisk" style="font-weight: bold; color: #27ae60;">LOW</span>
+                </div>
+                <p style="color: #7f8c8d; font-size: 12px; margin-top: 15px;">
+                    📍 Room 101 | Last: <span id="tempTime">--:--:--</span>
+                </p>
+            </div>
+
+            <!-- Humidity Card -->
+            <div class="card" id="humidityCard">
+                <div class="sensor-icon">💧</div>
+                <div class="sensor-title">HUMIDITY</div>
+                <div>
+                    <span class="sensor-value" id="humidityValue">55</span>
+                    <span class="sensor-unit">%</span>
+                </div>
+                <div class="threshold-bar">
+                    <div id="humidityBar" class="threshold-fill threshold-low" style="width: 55%;"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span>Range: 30-70%</span>
+                    <span id="humidityRisk" style="font-weight: bold; color: #27ae60;">NORMAL</span>
+                </div>
+                <p style="color: #7f8c8d; font-size: 12px; margin-top: 15px;">
+                    📍 Room 101 | Last: <span id="humidityTime">--:--:--</span>
+                </p>
+            </div>
+
+            <!-- Motion Card -->
+            <div class="card" id="motionCard">
+                <div class="sensor-icon">🚶</div>
+                <div class="sensor-title">MOTION DETECTION</div>
+                <div>
+                    <span class="sensor-value" id="motionValue">NO</span>
+                    <span class="sensor-unit"></span>
+                </div>
+                <div style="margin: 15px 0;">
+                    <span id="motionStatus" style="padding: 5px 15px; border-radius: 20px; background: #27ae60; color: white;">SECURE</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span>Last detection</span>
+                    <span id="motionRisk" style="font-weight: bold; color: #27ae60;">CLEAR</span>
+                </div>
+                <p style="color: #7f8c8d; font-size: 12px; margin-top: 15px;">
+                    📍 Room 101 | Last: <span id="motionTime">--:--:--</span>
+                </p>
+            </div>
+
+            <!-- Air Quality Card -->
+            <div class="card" id="airQualityCard">
+                <div class="sensor-icon">🌬️</div>
+                <div class="sensor-title">AIR QUALITY</div>
+                <div>
+                    <span class="sensor-value" id="airValue">95</span>
+                    <span class="sensor-unit">%</span>
+                </div>
+                <div class="threshold-bar">
+                    <div id="airBar" class="threshold-fill threshold-low" style="width: 25%;"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span>Threshold: 80%</span>
+                    <span id="airRisk" style="font-weight: bold; color: #27ae60;">GOOD</span>
+                </div>
+                <p style="color: #7f8c8d; font-size: 12px; margin-top: 15px;">
+                    📍 Room 101 | Last: <span id="airTime">--:--:--</span>
+                </p>
+            </div>
+        </div>
+
+        <!-- ===== RISK MATRIX & ALERT HISTORY ===== -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 25px;">
+            <!-- Risk Matrix -->
+            <div class="risk-matrix">
+                <h3 style="color: #2c3e50; margin-bottom: 15px;">⚠️ CURRENT RISK ASSESSMENT</h3>
+                <div class="matrix-grid">
+                    <div class="risk-item risk-critical" id="riskCriticalCount">
+                        🔴 CRITICAL: 0
+                    </div>
+                    <div class="risk-item risk-serious" id="riskSeriousCount">
+                        🟠 SERIOUS: 0
+                    </div>
+                    <div class="risk-item risk-moderate" id="riskModerateCount">
+                        🟡 MODERATE: 0
+                    </div>
+                    <div class="risk-item risk-minor" id="riskMinorCount">
+                        🟢 MINOR: 0
+                    </div>
+                    <div class="risk-item risk-low" id="riskLowCount">
+                        🔵 LOW: 3
+                    </div>
+                    <div class="risk-item" style="background: #34495e;" id="totalAlerts">
+                        📊 TOTAL: 3
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Alerts -->
+            <div class="risk-matrix">
+                <h3 style="color: #2c3e50; margin-bottom: 15px;">🚨 ACTIVE ALERTS</h3>
+                <div id="activeAlertsList" style="max-height: 200px; overflow-y: auto;">
+                    <div style="padding: 10px; background: #f8f9fa; border-radius: 5px; margin-bottom: 10px;">
+                        <span style="color: #27ae60;">✓ All systems normal</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== LIVE MQTT COMMUNICATION LOG ===== -->
+        <div class="mqtt-panel">
+            <div class="mqtt-header">
+                <div>
+                    <h3 style="color: #2c3e50;">📡 MQTT LIVE COMMUNICATION</h3>
+                    <p style="color: #7f8c8d;">Real-time protocol simulation • QoS 0,1,2</p>
+                </div>
+                <div class="mqtt-status">
+                    <span class="status-led"></span>
+                    <span style="color: #2ecc71; font-weight: bold;">BROKER: test.mosquitto.org:1883</span>
+                    <button class="mute-btn" onclick="toggleMute()" id="muteBtn">🔊 MUTE ALARM</button>
+                </div>
+            </div>
+            <div class="mqtt-log" id="mqttLog">
+                [SYSTEM] MQTT Risk Alert System initialized...
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== AUDIO CONTEXT (Hidden) ===== -->
+    <audio id="alarmSound" loop>
+        <source src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3" type="audio/mp3">
+    </audio>
+
+    <script>
+        // ============================================
+        // SMARTGUARD RISK ALERT SYSTEM - LIVE UPDATE
+        // ============================================
+        
+        // ===== RISK THRESHOLDS =====
+        const RISK_LEVELS = {
+            TEMPERATURE: {
+                critical: 35,
+                serious: 32,
+                moderate: 30,
+                minor: 28,
+                low: 25
+            },
+            HUMIDITY: {
+                critical: 80,
+                serious: 75,
+                moderate: 70,
+                minor: 65,
+                low: 60
+            },
+            MOTION: {
+                critical: 1, // Motion during off-hours
+                serious: 0.8,
+                moderate: 0.6
+            },
+            AIR_QUALITY: {
+                critical: 60,
+                serious: 65,
+                moderate: 70,
+                minor: 75,
+                low: 80
+            }
+        };
+
+        // ===== STATE VARIABLES =====
+        let temperature = 23.5;
+        let humidity = 55;
+        let motion = false;
+        let airQuality = 95;
+        let alertActive = false;
+        let alarmMuted = false;
+        let messageCounter = 1000;
+        let activeRisks = [];
+        
+        // ===== RISK COLORS =====
+        const riskColors = {
+            'CRITICAL': '#c0392b',
+            'SERIOUS': '#e74c3c',
+            'MODERATE': '#f39c12',
+            'MINOR': '#f1c40f',
+            'LOW': '#27ae60'
+        };
+
+        // ===== GET CURRENT TIME =====
+        function getCurrentTime() {
+            const now = new Date();
+            return now.toLocaleTimeString();
+        }
+
+        // ===== ADD MQTT LOG MESSAGE =====
+        function addMQTTMessage(message, qos = 1) {
+            const log = document.getElementById('mqttLog');
+            const time = getCurrentTime();
+            
+            let qosIcon = '';
+            if (qos === 2) qosIcon = '🔒';
+            else if (qos === 1) qosIcon = '📨';
+            else qosIcon = '📤';
+            
+            log.innerHTML = `[${time}] ${qosIcon} ${message}<br>` + log.innerHTML;
+            
+            // Keep only last 15 messages
+            const lines = log.innerHTML.split('<br>');
+            if (lines.length > 16) {
+                log.innerHTML = lines.slice(0, 16).join('<br>');
+            }
+        }
+
+        // ===== CALCULATE RISK LEVEL =====
+        function calculateRiskLevel(sensor, value) {
+            if (sensor === 'temperature') {
+                if (value >= RISK_LEVELS.TEMPERATURE.critical) return 'CRITICAL';
+                if (value >= RISK_LEVELS.TEMPERATURE.serious) return 'SERIOUS';
+                if (value >= RISK_LEVELS.TEMPERATURE.moderate) return 'MODERATE';
+                if (value >= RISK_LEVELS.TEMPERATURE.minor) return 'MINOR';
+                return 'LOW';
+            }
+            
+            if (sensor === 'humidity') {
+                if (value >= RISK_LEVELS.HUMIDITY.critical) return 'CRITICAL';
+                if (value >= RISK_LEVELS.HUMIDITY.serious) return 'SERIOUS';
+                if (value >= RISK_LEVELS.HUMIDITY.moderate) return 'MODERATE';
+                if (value >= RISK_LEVELS.HUMIDITY.minor) return 'MINOR';
+                return 'LOW';
+            }
+            
+            if (sensor === 'air') {
+                if (value <= RISK_LEVELS.AIR_QUALITY.critical) return 'CRITICAL';
+                if (value <= RISK_LEVELS.AIR_QUALITY.serious) return 'SERIOUS';
+                if (value <= RISK_LEVELS.AIR_QUALITY.moderate) return 'MODERATE';
+                if (value <= RISK_LEVELS.AIR_QUALITY.minor) return 'MINOR';
+                return 'LOW';
+            }
+            
+            return 'LOW';
+        }
+
+        // ===== UPDATE TEMPERATURE =====
+        function updateTemperature(value) {
+            document.getElementById('tempValue').innerHTML = value.toFixed(1);
+            document.getElementById('tempTime').innerHTML = getCurrentTime();
+            
+            // Calculate risk level
+            const risk = calculateRiskLevel('temperature', value);
+            const riskElement = document.getElementById('tempRisk');
+            const card = document.getElementById('tempCard');
+            const bar = document.getElementById('tempBar');
+            
+            // Update risk display
+            riskElement.innerHTML = risk;
+            riskElement.style.color = riskColors[risk];
+            
+            // Update progress bar
+            const percentage = Math.min((value / 40) * 100, 100);
+            bar.style.width = percentage + '%';
+            bar.className = 'threshold-fill';
+            
+            if (risk === 'CRITICAL') {
+                bar.classList.add('threshold-critical');
+                card.classList.add('card-alert');
+            } else if (risk === 'SERIOUS') {
+                bar.classList.add('threshold-high');
+                card.classList.remove('card-alert');
+            } else if (risk === 'MODERATE') {
+                bar.classList.add('threshold-moderate');
+                card.classList.remove('card-alert');
+            } else {
+                bar.classList.add('threshold-low');
+                card.classList.remove('card-alert');
+            }
+            
+            // Trigger alert if moderate or higher
+            if (risk === 'MODERATE' || risk === 'SERIOUS' || risk === 'CRITICAL') {
+                triggerAlert('TEMPERATURE', `${value.toFixed(1)}°C - ${risk} risk level`, risk);
+            }
+            
+            // MQTT publish
+            messageCounter++;
+            addMQTTMessage(`PUBLISH • Topic: smartguard/room1/temperature • QoS: 1 • MsgID: ${messageCounter} • Payload: {"value": ${value.toFixed(1)}, "risk": "${risk}"}`, 1);
+        }
+
+        // ===== UPDATE HUMIDITY =====
+        function updateHumidity(value) {
+            document.getElementById('humidityValue').innerHTML = Math.round(value);
+            document.getElementById('humidityTime').innerHTML = getCurrentTime();
+            
+            const risk = calculateRiskLevel('humidity', value);
+            const riskElement = document.getElementById('humidityRisk');
+            const bar = document.getElementById('humidityBar');
+            
+            riskElement.innerHTML = risk;
+            riskElement.style.color = riskColors[risk];
+            
+            const percentage = (value / 100) * 100;
+            bar.style.width = percentage + '%';
+            bar.className = 'threshold-fill';
+            
+            if (risk === 'CRITICAL') {
+                bar.classList.add('threshold-critical');
+            } else if (risk === 'SERIOUS') {
+                bar.classList.add('threshold-high');
+            } else if (risk === 'MODERATE') {
+                bar.classList.add('threshold-moderate');
+            } else {
+                bar.classList.add('threshold-low');
+            }
+            
+            if (risk === 'MODERATE' || risk === 'SERIOUS' || risk === 'CRITICAL') {
+                triggerAlert('HUMIDITY', `${Math.round(value)}% - ${risk} humidity level`, risk);
+            }
+            
+            messageCounter++;
+            addMQTTMessage(`PUBLISH • Topic: smartguard/room1/humidity • QoS: 1 • MsgID: ${messageCounter} • Payload: {"value": ${Math.round(value)}, "risk": "${risk}"}`, 1);
+        }
+
+        // ===== UPDATE MOTION =====
+        function updateMotion(detected) {
+            const valueDiv = document.getElementById('motionValue');
+            const statusSpan = document.getElementById('motionStatus');
+            const riskElement = document.getElementById('motionRisk');
+            const card = document.getElementById('motionCard');
+            
+            if (detected) {
+                valueDiv.innerHTML = 'YES';
+                valueDiv.style.color = '#e74c3c';
+                statusSpan.innerHTML = '🚨 MOTION DETECTED';
+                statusSpan.style.background = '#e74c3c';
+                riskElement.innerHTML = 'ACTIVE';
+                riskElement.style.color = '#e74c3c';
+                card.classList.add('card-alert');
+                
+                triggerAlert('MOTION', 'Unauthorized movement detected!', 'SERIOUS');
+                
+                messageCounter++;
+                addMQTTMessage(`PUBLISH • Topic: smartguard/room1/motion • QoS: 2 • MsgID: ${messageCounter} • Payload: {"motion": true, "risk": "SERIOUS"}`, 2);
+            } else {
+                valueDiv.innerHTML = 'NO';
+                valueDiv.style.color = '#2ecc71';
+                statusSpan.innerHTML = '✓ SECURE';
+                statusSpan.style.background = '#27ae60';
+                riskElement.innerHTML = 'CLEAR';
+                riskElement.style.color = '#27ae60';
+                card.classList.remove('card-alert');
+            }
+            
+            document.getElementById('motionTime').innerHTML = getCurrentTime();
+        }
+
+        // ===== UPDATE AIR QUALITY =====
+        function updateAirQuality(value) {
+            document.getElementById('airValue').innerHTML = Math.round(value);
+            document.getElementById('airTime').innerHTML = getCurrentTime();
+            
+            const risk = calculateRiskLevel('air', value);
+            const riskElement = document.getElementById('airRisk');
+            const bar = document.getElementById('airBar');
+            
+            riskElement.innerHTML = risk;
+            riskElement.style.color = riskColors[risk];
+            
+            const percentage = ((100 - value) * 2);
+            bar.style.width = Math.min(percentage, 100) + '%';
+            bar.className = 'threshold-fill';
+            
+            if (risk === 'CRITICAL') {
+                bar.classList.add('threshold-critical');
+            } else if (risk === 'SERIOUS') {
+                bar.classList.add('threshold-high');
+            } else if (risk === 'MODERATE') {
+                bar.classList.add('threshold-moderate');
+            } else {
+                bar.classList.add('threshold-low');
+            }
+            
+            if (risk === 'MODERATE' || risk === 'SERIOUS' || risk === 'CRITICAL') {
+                triggerAlert('AIR QUALITY', `${Math.round(value)}% - ${risk} air quality`, risk);
+            }
+            
+            messageCounter++;
+            addMQTTMessage(`PUBLISH • Topic: smartguard/room1/airquality • QoS: 1 • MsgID: ${messageCounter} • Payload: {"value": ${Math.round(value)}, "risk": "${risk}"}`, 1);
+        }
+
+        // ===== TRIGGER ALERT =====
+        function triggerAlert(type, message, riskLevel) {
+            const banner = document.getElementById('emergencyBanner');
+            const title = document.getElementById('alertTitle');
+            const description = document.getElementById('alertDescription');
+            const timestamp = document.getElementById('alertTimestamp');
+            const riskIndicator = document.getElementById('globalRiskIndicator');
+            
+            // Update banner
+            title.innerHTML = `${riskLevel} ALERT: ${type}`;
+            description.innerHTML = message;
+            timestamp.innerHTML = `Time: ${getCurrentTime()}`;
+            
+            // Show banner
+            banner.style.display = 'flex';
+            
+            // Update global risk indicator
+            riskIndicator.className = 'risk-indicator';
+            if (riskLevel === 'CRITICAL') {
+                riskIndicator.classList.add('risk-high');
+                riskIndicator.innerHTML = '🔴 CRITICAL RISK - IMMEDIATE ACTION REQUIRED';
+            } else if (riskLevel === 'SERIOUS') {
+                riskIndicator.classList.add('risk-high');
+                riskIndicator.innerHTML = '🟠 SERIOUS RISK - URGENT ATTENTION NEEDED';
+            } else if (riskLevel === 'MODERATE') {
+                riskIndicator.classList.add('risk-moderate');
+                riskIndicator.innerHTML = '🟡 MODERATE RISK - MONITOR CLOSELY';
+            }
+            
+            // Play alarm sound
+            if (!alarmMuted) {
+                const alarm = document.getElementById('alarmSound');
+                alarm.play().catch(e => console.log('Audio play failed:', e));
+            }
+            
+            // Add to active alerts
+            addToActiveAlerts(type, message, riskLevel);
+            
+            // Update risk counts
+            updateRiskCounts(riskLevel);
+            
+            // MQTT Alert with QoS 2
+            messageCounter++;
+            addMQTTMessage(`PUBLISH • Topic: smartguard/room1/alerts • QoS: 2 • MsgID: ${messageCounter} • Payload: {"type": "${type}", "message": "${message}", "risk": "${riskLevel}"}`, 2);
+            addMQTTMessage(`PUBREC • MsgID: ${messageCounter}`, 2);
+            addMQTTMessage(`PUBREL • MsgID: ${messageCounter}`, 2);
+            addMQTTMessage(`PUBCOMP • MsgID: ${messageCounter}`, 2);
+        }
+
+        // ===== ADD TO ACTIVE ALERTS LIST =====
+        function addToActiveAlerts(type, message, riskLevel) {
+            const list = document.getElementById('activeAlertsList');
+            const time = getCurrentTime();
+            
+            const colors = {
+                'CRITICAL': '#c0392b',
+                'SERIOUS': '#e74c3c',
+                'MODERATE': '#f39c12'
+            };
+            
+            const alertHtml = `
+                <div style="padding: 12px; background: ${colors[riskLevel]}; color: white; border-radius: 8px; margin-bottom: 10px; animation: slideIn 0.3s;">
+                    <div style="display: flex; justify-content: space-between;">
+                        <strong>${riskLevel}: ${type}</strong>
+                        <span>${time}</span>
+                    </div>
+                    <p style="margin-top: 5px; font-size: 14px;">${message}</p>
+                </div>
+            `;
+            
+            list.innerHTML = alertHtml + list.innerHTML;
+            
+            // Keep only last 5 alerts
+            const alerts = list.children;
+            if (alerts.length > 5) {
+                alerts[alerts.length - 1].remove();
+            }
+        }
+
+        // ===== UPDATE RISK COUNTS =====
+        function updateRiskCounts(riskLevel) {
+            if (riskLevel === 'CRITICAL') {
+                const count = document.getElementById('riskCriticalCount');
+                const current = parseInt(count.innerHTML.match(/\d+/)[0]) || 0;
+                count.innerHTML = `🔴 CRITICAL: ${current + 1}`;
+            } else if (riskLevel === 'SERIOUS') {
+                const count = document.getElementById('riskSeriousCount');
+                const current = parseInt(count.innerHTML.match(/\d+/)[0]) || 0;
+                count.innerHTML = `🟠 SERIOUS: ${current + 1}`;
+            } else if (riskLevel === 'MODERATE') {
+                const count = document.getElementById('riskModerateCount');
+                const current = parseInt(count.innerHTML.match(/\d+/)[0]) || 0;
+                count.innerHTML = `🟡 MODERATE: ${current + 1}`;
+            }
+            
+            // Update total
+            const total = document.getElementById('totalAlerts');
+            const critical = parseInt(document.getElementById('riskCriticalCount').innerHTML.match(/\d+/)[0]) || 0;
+            const serious = parseInt(document.getElementById('riskSeriousCount').innerHTML.match(/\d+/)[0]) || 0;
+            const moderate = parseInt(document.getElementById('riskModerateCount').innerHTML.match(/\d+/)[0]) || 0;
+            const minor = parseInt(document.getElementById('riskMinorCount').innerHTML.match(/\d+/)[0]) || 0;
+            const low = parseInt(document.getElementById('riskLowCount').innerHTML.match(/\d+/)[0]) || 0;
+            
+            total.innerHTML = `📊 TOTAL: ${critical + serious + moderate + minor + low}`;
+        }
+
+        // ===== ACKNOWLEDGE ALERT =====
+        function acknowledgeAlert() {
+            const banner = document.getElementById('emergencyBanner');
+            banner.style.display = 'none';
+            
+            const alarm = document.getElementById('alarmSound');
+            alarm.pause();
+            alarm.currentTime = 0;
+            
+            addMQTTMessage(`PUBLISH • Topic: smartguard/room1/acknowledge • QoS: 1 • Alert acknowledged by operator`, 1);
+        }
+
+        // ===== SILENCE ALARM =====
+        function silenceAlarm() {
+            const alarm = document.getElementById('alarmSound');
+            alarm.pause();
+            alarm.currentTime = 0;
+            
+            addMQTTMessage(`PUBLISH • Topic: smartguard/room1/control • QoS: 1 • Alarm silenced`, 1);
+        }
+
+        // ===== TOGGLE MUTE =====
+        function toggleMute() {
+            alarmMuted = !alarmMuted;
+            const btn = document.getElementById('muteBtn');
+            const alarm = document.getElementById('alarmSound');
+            
+            if (alarmMuted) {
+                btn.innerHTML = '🔇 UNMUTE ALARM';
+                alarm.pause();
+            } else {
+                btn.innerHTML = '🔊 MUTE ALARM';
+            }
+        }
+
+        // ===== GENERATE SENSOR DATA =====
+        function generateSensorData() {
+            // Gradually change temperature (sometimes go into alert range)
+            if (temperature < 38 && Math.random() > 0.6) {
+                temperature += Math.random() * 0.8;
+            } else if (temperature > 20 && Math.random() > 0.7) {
+                temperature -= Math.random() * 0.5;
+            }
+            
+            // Humidity variation
+            humidity += (Math.random() - 0.5) * 3;
+            humidity = Math.max(30, Math.min(85, humidity));
+            
+            // Motion (15% chance)
+            motion = Math.random() < 0.15;
+            
+            // Air quality
+            airQuality += (Math.random() - 0.5) * 4;
+            airQuality = Math.max(60, Math.min(100, airQuality));
+            
+            return {
+                temp: temperature,
+                hum: humidity,
+                mot: motion,
+                air: airQuality
+            };
+        }
+
+        // ===== UPDATE DASHBOARD =====
+        function updateDashboard() {
+            const data = generateSensorData();
+            
+            updateTemperature(data.temp);
+            updateHumidity(data.hum);
+            updateMotion(data.mot);
+            updateAirQuality(data.air);
+        }
+
+        // ===== INITIALIZE =====
+        function initDashboard() {
+            addMQTTMessage('CONNECT • Client: ESP32_RISK_MONITOR • Clean Session: True', 0);
+            addMQTTMessage('CONNACK • Return Code: 0 • Connection Accepted', 0);
+            addMQTTMessage('SUBSCRIBE • Topic: smartguard/room1/# • QoS: 1', 0);
+            addMQTTMessage('SUBACK • Granted QoS: 1', 0);
+            addMQTTMessage('SYSTEM • Risk Alert System initialized • Monitoring active', 0);
+            
+            // Initialize counts
+            document.getElementById('riskCriticalCount').innerHTML = '🔴 CRITICAL: 0';
+            document.getElementById('riskSeriousCount').innerHTML = '🟠 SERIOUS: 0';
+            document.getElementById('riskModerateCount').innerHTML = '🟡 MODERATE: 0';
+            document.getElementById('riskMinorCount').innerHTML = '🟢 MINOR: 0';
+            document.getElementById('riskLowCount').innerHTML = '🔵 LOW: 3';
+            document.getElementById('totalAlerts').innerHTML = '📊 TOTAL: 3';
+            
+            // Start live updates
+            updateDashboard();
+            setInterval(updateDashboard, 3000);
+        }
+
+        // Start everything
+        window.onload = initDashboard;
+    </script>
+</body>
+</html>
